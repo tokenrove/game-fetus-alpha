@@ -49,3 +49,13 @@ void* ll_font_render_shaded(void* font, const char* string,
     bg.r = r2; bg.b = b2; bg.g = g2;
     return TTF_RenderText_Shaded((TTF_Font*)font, string, fg, bg);
 }
+
+
+/*
+ * ll_font_set_style
+ * ll_font_height
+ * ll_font_line_skip
+ * ll_font_size_text
+ * ll_font_ascent
+ * ll_font_descent
+ */

@@ -7,7 +7,7 @@
 
 ;;;; USER-INTERFACE ROUTINES
 
-(defun editor-yes-no-prompt (font message)
+(defun prompt-for-yes-or-no (font message)
   (loop
      (draw-status-message font message 128 128 128)
      (fetus:refresh-display)
@@ -16,7 +16,7 @@
 	   ((= event (char-code #\n)) (return nil))))))
 
 
-(defun editor-string-prompt (font message &key (symbol-mode nil))
+(defun prompt-for-string (font message &key (symbol-mode nil))
   (do ((string (make-array '(10) :element-type 'base-char
 			   :fill-pointer 0 :adjustable t)))
       (nil)
@@ -35,7 +35,7 @@
 	       (vector-pop string)))))))
 
 
-(defun editor-number-prompt (font message)
+(defun prompt-for-integer (font message)
   (do ((number 0))
       (nil)
     (draw-status-message font (format nil "~A~A" message number) 128 128 128)

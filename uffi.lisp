@@ -6,11 +6,13 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   ;; XXX eventually needs to figure out how to find the data.
-  (assert
-   (uffi:load-foreign-library "./game-fetus-alpha/low-level.so"
-			      :module "low-level"
-			      :supporting-libraries '("c")
-			      :force-load t)))
+  (let ((location "./low-level.so"))
+    (assert
+      (uffi:load-foreign-library location
+                                 :module "low-level"
+                                 :supporting-libraries '("c")
+                                 :force-load t)
+      (location) "Couldn't find or load ~A." location)))
 
 (defun maybe-null->nil (ptr)
   "Convenience function -- if the supplied pointer is NULL, returns

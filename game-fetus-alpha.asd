@@ -15,6 +15,4 @@
    (:file "font" :depends-on ("package" "graphics" "uffi"))
    (:file "sprite" :depends-on ("package" "graphics"))
    (:file "layer" :depends-on ("package" "graphics"))
-   (:file "generic-editor" :depends-on ("package"
-					"graphics"
-					"event"))))
+   (:file "generic-editor" :depends-on ("package" "graphics" "event"))))

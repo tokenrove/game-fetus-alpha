@@ -62,7 +62,7 @@
 	   #:with-sprite-manager
 	   ;; layer
 	   ;; generic editor
-	   #:editor-yes-no-prompt
-	   #:editor-string-prompt
-	   #:editor-number-prompt
+	   #:prompt-for-yes-or-no
+	   #:prompt-for-string
+	   #:prompt-for-integer
 	   #:draw-status-message))

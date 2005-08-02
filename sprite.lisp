@@ -64,11 +64,12 @@ priority and screen position."))
   "Set the current animation associated with SPRITE.  Resets the
 sprite's frame count if ANIM is different from the current animation.
 Returns T if the animation was updated, NIL otherwise."
-  ;; XXX set correct frame count, etc etc
   (unless (eql anim (sprite-cur-anim sprite))
-    (setf (sprite-cur-anim sprite) anim)
-    (setf (sprite-cur-frame sprite) 0)
-    t))
+    (let ((flist (cdr (assoc anim (sprite-animations sprite)))))
+      (setf (sprite-cur-anim sprite) anim
+	    (sprite-cur-frame sprite) 0
+	    (sprite-frame-counter sprite) (cdar flist))
+      t)))
 
 ;;;; Sprite Manager
 
