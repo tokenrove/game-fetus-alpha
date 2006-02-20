@@ -72,52 +72,52 @@ an interruption or similar."
   (setf *event-map* (bit-xor *event-map* *event-map*)))
 
 
+;; XXX refactor
 (defun event-update ()
   "function EVENT-UPDATE
 
 Checks for events, updates internal input state."
-  (with-foreign-objects ((event '(:struct ll-event)))
-    (do* ((rv #1=(ll-poll-event (pointer-to-object event)) #1#))
+  (cffi:with-foreign-object (event 'll-event)
+    (do* ((rv #1=(ll-poll-event event) #1#))
 	 ((= rv 0))
-      (let ((type (uffi:get-slot-value event 'll-event 'type))
-	    (value (uffi:get-slot-value event 'll-event 'value))
-	    (axis (uffi:get-slot-value event 'll-event 'axis)))
-	(cond ((= type +ll-event-key-down+)
-	       (awhen (gethash value *xlate-symbol->map-idx*)
-		 (setf (bit *event-map* it) 1)))
-	      ((= type +ll-event-key-up+)
-	       (awhen (gethash value *xlate-symbol->map-idx*)
-		 (setf (bit *event-map* it) 0)))
-	      ((= type +ll-event-joy-move+)
-	       (case axis
-		 (0 (cond ((plusp value)
-			   (setf (bit *event-map* +ev-right+) 1
-				 (bit *event-map* +ev-left+) 0))
-			  ((minusp value)
-			   (setf (bit *event-map* +ev-right+) 0
-				 (bit *event-map* +ev-left+) 1))
-			  (t
-			   (setf (bit *event-map* +ev-right+) 0
-				 (bit *event-map* +ev-left+) 0))))
-		 (1 (cond ((plusp value)
-			   (setf (bit *event-map* +ev-down+) 1
-				 (bit *event-map* +ev-up+) 0))
-			  ((minusp value)
-			   (setf (bit *event-map* +ev-down+) 0
-				 (bit *event-map* +ev-up+) 1))
-			  (t
-			   (setf (bit *event-map* +ev-down+) 0
-				 (bit *event-map* +ev-up+) 0))))))
-	      ((= type +ll-event-joy-button-down+)
-	       (awhen (case value
-			(0 +ev-button-a+)
-			(1 +ev-button-b+))
-		 (setf (bit *event-map* it) 1)))
-	      ((= type +ll-event-joy-button-up+)
-	       (awhen (case value
-			(0 +ev-button-a+)
-			(1 +ev-button-b+))
-		 (setf (bit *event-map* it) 0))))))))
+      (cffi:with-foreign-slots ((type value axis) event ll-event)
+	(case type
+	  (:key-down
+	   (awhen (gethash value *xlate-symbol->map-idx*)
+	     (setf (bit *event-map* it) 1)))
+	  (:key-up
+	   (awhen (gethash value *xlate-symbol->map-idx*)
+	     (setf (bit *event-map* it) 0)))
+	  (:joy-move
+	   (case axis
+	     (0 (cond ((plusp value)
+		       (setf (bit *event-map* +ev-right+) 1
+			     (bit *event-map* +ev-left+) 0))
+		      ((minusp value)
+		       (setf (bit *event-map* +ev-right+) 0
+			     (bit *event-map* +ev-left+) 1))
+		      (t
+		       (setf (bit *event-map* +ev-right+) 0
+			     (bit *event-map* +ev-left+) 0))))
+	     (1 (cond ((plusp value)
+		       (setf (bit *event-map* +ev-down+) 1
+			     (bit *event-map* +ev-up+) 0))
+		      ((minusp value)
+		       (setf (bit *event-map* +ev-down+) 0
+			     (bit *event-map* +ev-up+) 1))
+		      (t
+		       (setf (bit *event-map* +ev-down+) 0
+			     (bit *event-map* +ev-up+) 0))))))
+	  (:joy-button-down
+	   (awhen (case value
+		    (0 +ev-button-a+)
+		    (1 +ev-button-b+))
+	     (setf (bit *event-map* it) 1)))
+	  (:joy-button-up
+	   (awhen (case value
+		    (0 +ev-button-a+)
+		    (1 +ev-button-b+))
+	     (setf (bit *event-map* it) 0))))))))
 
 
 (defun event-pressedp (event)
@@ -126,9 +126,9 @@ Checks for events, updates internal input state."
 
 
 (defun get-key-event ()
-  (with-foreign-objects ((event '(:struct ll-event)))
-    (do ((rv #1=(ll-wait-event (pointer-to-object event)) #1#))
+  (cffi:with-foreign-object (event 'll-event)
+    (do ((rv #1=(ll-wait-event event) #1#))
 	((= rv 0))
-      (let ((type (uffi:get-slot-value event 'll-event 'type)))
-	(cond ((= type +ll-event-key-down+)
-	       (return (uffi:get-slot-value event 'll-event 'value))))))))
+      (cffi:with-foreign-slots ((type value) event ll-event)
+	(when (eql type :key-down)
+	  (return value))))))

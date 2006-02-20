@@ -29,26 +29,34 @@
 	   (progn ,@body)
 	(free-image ,variable)))))
 
+(defmacro with-color-boa ((var r g b) &body body)
+  `(cffi:with-foreign-object (,var 'sdl-color)
+    (loop for slot in '(r g b)
+          for value in (list ,r ,g ,b)
+          do (setf (cffi:foreign-slot-value ,var 'sdl-color slot) value))
+    ,@body))
+
+
 (defun paint-string (font string x y r g b)
   "Paints STRING on *VBUFFER* using FONT, at position (X,Y)."
-  (uffi:with-cstring (cstring string)
-    (with-temporary-surface (face (ll-font-render-solid font cstring r g b))
+  (with-color-boa (c r g b)
+    (with-temporary-surface (face (ll-font-render-solid font string c))
       (blit-image face x (+ y (surface-h face))))))
 
 (defun paint-blended-string (font string x y r g b)
   "Paints STRING on *VBUFFER* using FONT, at position (X,Y)."
-  (uffi:with-cstring (cstring string)
+  (with-color-boa (c r g b)
     (with-temporary-surface (face
-			     (ll-font-render-blended font cstring r g b))
-      (blit-image sface x (+ y (surface-h sface))))))
+			     (ll-font-render-blended font string c))
+      (blit-image face x (+ y (surface-h face))))))
 
 (defun paint-shaded-string (font string x y r1 g1 b1 r2 g2 b2)
   "Paints STRING on *VBUFFER* using FONT, at position (X,Y)."
-  (uffi:with-cstring (cstring string)
-    (with-temporary-surface (face
-			     (ll-font-render-shaded font cstring r1 g1 b1
-						    r2 g2 b2))
-      (blit-image sface x (+ y (surface-h sface))))))
+  (with-color-boa (fg r1 g1 b1)
+    (with-color-boa (bg r2 g2 b2)
+      (with-temporary-surface (face
+			       (ll-font-render-shaded font string fg bg))
+	(blit-image face x (+ y (surface-h face)))))))
 
 (defun destroy-font (font)
   "Deallocates FONT appropriately."
@@ -58,8 +66,7 @@
 (defun load-font (file &optional (ptsize 12))
   "Loads font, with point size PTSIZE, from FILE, and returns it, or
 NIL."
-  (uffi:with-cstring (name file)
-    (maybe-null->nil (ll-font-open name ptsize))))
+  (maybe-null->nil (ll-font-open file ptsize)))
 
 (defmacro with-font ((font-var file &optional (ptsize 12)) &body body)
   `(let ((,font-var (load-font ,file ,ptsize)))

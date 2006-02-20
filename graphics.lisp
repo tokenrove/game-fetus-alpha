@@ -23,7 +23,7 @@ Initialize the display, optionally fullscreen (beware setting this
 option on undebugged code!)."
   (setf *vbuffer*
 	(maybe-null->nil
-	 (ll-gfx-init (bool->int fullscreen-p)
+	 (ll-gfx-init fullscreen-p
 		      *desired-width* *desired-height* *desired-bpp*)))
   (assert *vbuffer*)
   t)
@@ -37,7 +37,7 @@ if something went wrong."
   (maybe-null->nil (ll-gfx-new-image-buffer w h)))
 
 (defun destroy-display ()
-  "Shust down the display and frees the double buffer."
+  "Shuts down the display and frees the double buffer."
   (ll-gfx-shutdown *vbuffer*))
 
 (defun refresh-display ()
@@ -51,16 +51,15 @@ if something went wrong."
 
 (defun fill-background (color &optional (destination *vbuffer*))
   "Fills the destination with a solid color."
-  (ll-gfx-fill-rect-stub destination 0 0 -1 0 color))
+  (ll-gfx-fill-rect destination (cffi:null-pointer) color))
 
 (defun load-image (filename &optional (colorkeyp nil))
   "function LOAD-IMAGE filename &optional colorkeyp => surface
 
 Loads an image (in pretty much any sane format), optionally with color
 zero flagged as transparent (when colorkeyp)."
-  (uffi:with-cstring (name filename)
-    (and filename
-	 (maybe-null->nil (ll-gfx-load-image name (bool->int colorkeyp))))))
+  (and filename
+       (maybe-null->nil (ll-gfx-load-image filename colorkeyp))))
 
 (defun free-image (image)
   "Deallocates resources used by an image surface."
@@ -73,6 +72,20 @@ Sets the current display palette to whatever image is carrying around
 with it."
   (when image (ll-gfx-use-image-palette image *vbuffer*)))
 
+(eval-when (:compile-toplevel)
+  (defmacro with-gfx-rect-from-list ((var list) &body body)
+    `(cffi:with-foreign-object (,var 'gfx-rect)
+      (loop for slot in '(x y w h)
+            for value in ,list
+            do (setf (cffi:foreign-slot-value ,var 'gfx-rect slot) value))
+      ,@body))
+  (defmacro with-gfx-rect-boa ((var x y w h) &body body)
+    `(cffi:with-foreign-object (,var 'gfx-rect)
+      (loop for slot in '(x y w h)
+            for value in (list ,x ,y ,w ,h)
+            do (setf (cffi:foreign-slot-value ,var 'gfx-rect slot) value))
+      ,@body)))
+
 (defun blit-image (img x y &key (src-rect nil) (destination *vbuffer*))
   "function BLIT-IMAGE image x y
 
@@ -83,10 +96,9 @@ optionally clipping by src-rect."
     ;; XXX this silly Y change is going to be removed.
     (decf y (if src-rect (fourth src-rect) (surface-h img)))
     (if src-rect
-      (ll-gfx-blit-surface-stub img (first src-rect) (second src-rect)
-                                (third src-rect) (fourth src-rect)
-                                destination x y)
-      (ll-gfx-blit-surface-stub img 0 0 -1 0 destination x y))
+	(with-gfx-rect-from-list (rect src-rect)
+	  (ll-gfx-blit-surface img rect destination x y))
+	(ll-gfx-blit-surface img (cffi:null-pointer) destination x y))
     t))
 
 ;;; Y'know, in Double Draggin', I implemented Wu-Rokne-Wyvill line
@@ -120,17 +132,16 @@ COLOR, on SURFACE."
 	 (sign-y (if (> delta-y 0) 1 -1))
 	 (d 0))
     (declare (type fixnum d))
-
-    (cond ((< ay ax)
-	   (inner-draw-line nil
-	     (when (and (<= 0 p-x (surface-w surface))
-			(<= 0 p-y (surface-h surface)))
-	       (ll-gfx-draw-pixel surface p-x p-y color))))
-	  (t
-	   (inner-draw-line t
-	     (when (and (<= 0 p-x (surface-w surface))
-			(<= 0 p-y (surface-h surface)))
-	       (ll-gfx-draw-pixel surface p-x p-y color))))))
+    (flet ((in-drawable-region-p ()
+	     (and (<= 0 p-x (surface-w surface))
+		  (<= 0 p-y (surface-h surface)))))
+      (if (< ay ax)
+	  (inner-draw-line nil
+			   (when (in-drawable-region-p)
+			     (ll-gfx-draw-pixel surface p-x p-y color)))
+	  (inner-draw-line t
+			   (when (in-drawable-region-p)
+			     (ll-gfx-draw-pixel surface p-x p-y color))))))
 
   (ll-gfx-unlock-surface surface))
 
@@ -143,8 +154,8 @@ COLOR, on SURFACE."
 
 (defun draw-filled-rectangle (x y w h color &optional (surface *vbuffer*))
   "Draws a filled rectangle with solid color COLOR on SURFACE."
-  (ll-gfx-fill-rect-stub surface x y w h color))
-
+  (with-gfx-rect-boa (rect x y w h)
+    (ll-gfx-fill-rect surface rect color)))
 
 (defun draw-triangle (xs ys color &optional (surface *vbuffer*))
   "Draws an unfilled triangle where XS and YS are lists containing

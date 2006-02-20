@@ -143,9 +143,13 @@ void ll_gfx_blit_surface_stub(void* src, int x, int y, int w, int h,
 }
 
 void ll_gfx_blit_surface(void* src, SDL_Rect* srect,
-			 void* dst, SDL_Rect* drect)
+			 void* dst, int x, int y)
 {
-    SDL_BlitSurface(src, srect, dst, drect);
+    SDL_Rect drect;
+
+    drect.x = x;
+    drect.y = y;
+    SDL_BlitSurface(src, srect, dst, &drect);
 }
 
 
