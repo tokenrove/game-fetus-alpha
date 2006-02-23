@@ -16,14 +16,14 @@
   "Pointer to video double buffer.")
 
 
-(defun create-display (&optional (fullscreen-p nil))
-  "function CREATE-DISPLAY &optional fullscreen-p => t
+(defun create-display (&key (fullscreen-p nil) (scale 1))
+  "function CREATE-DISPLAY &key fullscreen-p scale => t
 
 Initialize the display, optionally fullscreen (beware setting this
 option on undebugged code!)."
   (setf *vbuffer*
 	(maybe-null->nil
-	 (ll-gfx-init fullscreen-p
+	 (ll-gfx-init fullscreen-p scale
 		      *desired-width* *desired-height* *desired-bpp*)))
   (assert *vbuffer*)
   t)

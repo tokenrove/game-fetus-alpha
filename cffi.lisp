@@ -18,6 +18,7 @@
 (declaim (inline ll-gfx-init ll-gfx-shutdown))
 (cffi:defcfun "ll_gfx_init" :pointer
   (fullscreen-p :boolean)
+  (scale :int)
   (width :int)
   (height :int)
   (bpp :int))
