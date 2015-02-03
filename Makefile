@@ -1,5 +1,5 @@
 
-CFLAGS=-Wall -pedantic -std=c99 -O3 `sdl-config --cflags`
+CFLAGS=-fPIC -Wall -pedantic -std=c99 -O3 `sdl-config --cflags`
 LDFLAGS=`sdl-config --libs` -lSDL_image -lSDL_ttf
 CC=gcc
 
