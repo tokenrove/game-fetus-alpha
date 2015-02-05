@@ -10,23 +10,39 @@
 
 (defparameter *desired-width* 320)
 (defparameter *desired-height* 240)
-(defparameter *desired-bpp* 8)
 
 (defvar *vbuffer* nil
   "Pointer to video double buffer.")
+;; *Sigh*.  More global variables.  Soon change will come like an
+;; unexpected squall.
+(defvar *window*)
+(defvar *renderer*)
+(defvar *vtexture*)
 
-
-(defun create-display (&key (fullscreen-p nil) (scale 1))
-  "function CREATE-DISPLAY &key fullscreen-p scale => t
-
-Initialize the display, optionally fullscreen (beware setting this
-option on undebugged code!)."
-  (setf *vbuffer*
-	(maybe-null->nil
-	 (ll-gfx-init fullscreen-p scale
-		      *desired-width* *desired-height* *desired-bpp*)))
-  (assert *vbuffer*)
-  t)
+(defmacro with-display ((&key (fullscreen? nil) (scale 1)) &body body)
+  (declare (ignore fullscreen?))
+  `(sdl:with-init ()
+     (sdl-image:with-init ()
+       (sdl-ttf:with-init ()
+        (sdl:with-window-and-renderer (*window*
+                                       *renderer*
+                                       (* ,scale *desired-width*)
+                                       (* ,scale *desired-height*)
+                                       0)
+          (sdl:render-set-logical-size *renderer* *desired-width* *desired-height*)
+          (sdl:hide-cursor)
+          (sdl:with-format (format :pixel-format-argb8888)
+            (let ((*vtexture* (sdl:create-texture *renderer*
+                                                  :pixel-format-argb8888
+                                                  :texture-access-streaming
+                                                  *desired-width*
+                                                  *desired-height*))
+                  (*vbuffer* (sdl:create-rgb-surface *desired-width* *desired-height* format)))
+              (unwind-protect (progn
+                                ,@body)
+                (sdl:free-surface *vbuffer*)
+                (sdl:destroy-texture *vtexture*)
+                (setf *vbuffer* nil *vtexture* nil)))))))))
 
 (defun new-image-buffer (w h)
   "function NEW-IMAGE-BUFFER w h => surface
@@ -34,57 +50,45 @@ option on undebugged code!)."
 Creates a new graphics surface with the specified dimensions, and the
 same format as the current display.  Returns the new surface, or NIL
 if something went wrong."
-  (maybe-null->nil (ll-gfx-new-image-buffer w h)))
+  (sdl:create-rgb-surface w h :pixel-format-argb8888))
 
-(defun destroy-display ()
-  "Shuts down the display and frees the double buffer."
-  (ll-gfx-shutdown *vbuffer*))
+(defun clear-display ()
+  (sdl:render-clear *renderer*))
 
-(defun refresh-display ()
+(defun present-display ()
   "Flips the double buffer, updates current display."
-  (ll-gfx-refresh-display *vbuffer*))
+  (sdl:update-texture-from-surface *vtexture* nil *vbuffer*)
+  (sdl:render-copy *renderer* *vtexture* nil nil)
+  (sdl:render-present *renderer*))
 
-(defun surface-w (sface) (ll-gfx-surface-w sface))
-(defun surface-h (sface) (ll-gfx-surface-h sface))
+(defun surface-w (sface) (sdl:width-of sface))
+(defun surface-h (sface) (sdl:height-of sface))
 (defun display-width () (surface-w *vbuffer*))
 (defun display-height () (surface-h *vbuffer*))
 
 (defun fill-background (color &optional (destination *vbuffer*))
   "Fills the destination with a solid color."
-  (ll-gfx-fill-rect destination (cffi:null-pointer) color))
+  (sdl:fill-rect destination nil color))
 
 (defun load-image (filename &optional (colorkeyp nil))
   "function LOAD-IMAGE filename &optional colorkeyp => surface
 
 Loads an image (in pretty much any sane format), optionally with color
 zero flagged as transparent (when colorkeyp)."
-  (and filename
-       (maybe-null->nil (ll-gfx-load-image filename colorkeyp))))
+  (aprog1 (sdl-image:load filename)
+    (when (and it colorkeyp)
+      (sdl:set-color-key it t 0))))
 
 (defun free-image (image)
   "Deallocates resources used by an image surface."
-  (when image (ll-gfx-free-surface image)))
+  (when image (sdl:free-surface image)))
 
 (defun use-image-palette (image)
   "function USE-IMAGE-PALETTE image
 
 Sets the current display palette to whatever image is carrying around
 with it."
-  (when image (ll-gfx-use-image-palette image *vbuffer*)))
-
-(eval-when (:compile-toplevel)
-  (defmacro with-gfx-rect-from-list ((var list) &body body)
-    `(cffi:with-foreign-object (,var 'gfx-rect)
-      (loop for slot in '(x y w h)
-            for value in ,list
-            do (setf (cffi:foreign-slot-value ,var 'gfx-rect slot) value))
-      ,@body))
-  (defmacro with-gfx-rect-boa ((var x y w h) &body body)
-    `(cffi:with-foreign-object (,var 'gfx-rect)
-      (loop for slot in '(x y w h)
-            for value in (list ,x ,y ,w ,h)
-            do (setf (cffi:foreign-slot-value ,var 'gfx-rect slot) value))
-      ,@body)))
+  (sdl:set-surface-palette *vbuffer* (sdl:palette-of image)))
 
 (defun blit-image (img x y &key (src-rect nil) (destination *vbuffer*))
   "function BLIT-IMAGE image x y
@@ -96,9 +100,9 @@ optionally clipping by src-rect."
     ;; XXX this silly Y change is going to be removed.
     (decf y (if src-rect (fourth src-rect) (surface-h img)))
     (if src-rect
-	(with-gfx-rect-from-list (rect src-rect)
-	  (ll-gfx-blit-surface img rect destination x y))
-	(ll-gfx-blit-surface img (cffi:null-pointer) destination x y))
+        (sdl:with-rect-from-list (rect src-rect)
+          (sdl:blit-surface img rect destination x y))
+        (sdl:blit-surface img nil destination x y))
     t))
 
 ;;; Y'know, in Double Draggin', I implemented Wu-Rokne-Wyvill line
@@ -118,32 +122,31 @@ optionally clipping by src-rect."
 	  (incf ,@(if swap-p '(p-y sign-y) '(p-x sign-x)))
 	  (incf d ,(if swap-p 'ax 'ay))))))
 
+;;; XXX All this stuff should become calls to SDL's renderer code.
 (defun draw-line (p-x p-y q-x q-y color &optional (surface *vbuffer*))
   "Draw a line between points (p-x, p-y) and (q-x, q-y), in color
 COLOR, on SURFACE."
   (declare (optimize speed)
-	   (type fixnum p-x p-y q-x q-y))
-  (ll-gfx-lock-surface surface)
-  (let* ((delta-x (- q-x p-x))
-	 (delta-y (- q-y p-y))
-	 (ax (the fixnum (* 2 (abs delta-x))))
-	 (ay (the fixnum (* 2 (abs delta-y))))
-	 (sign-x (if (> delta-x 0) 1 -1))
-	 (sign-y (if (> delta-y 0) 1 -1))
-	 (d 0))
-    (declare (type fixnum d))
-    (flet ((in-drawable-region-p ()
-	     (and (<= 0 p-x (surface-w surface))
-		  (<= 0 p-y (surface-h surface)))))
-      (if (< ay ax)
-	  (inner-draw-line nil
-			   (when (in-drawable-region-p)
-			     (ll-gfx-draw-pixel surface p-x p-y color)))
-	  (inner-draw-line t
-			   (when (in-drawable-region-p)
-			     (ll-gfx-draw-pixel surface p-x p-y color))))))
-
-  (ll-gfx-unlock-surface surface))
+           (type fixnum p-x p-y q-x q-y))
+  (sdl:with-locked-surface (surface)
+    (let* ((delta-x (- q-x p-x))
+           (delta-y (- q-y p-y))
+           (ax (the fixnum (* 2 (abs delta-x))))
+           (ay (the fixnum (* 2 (abs delta-y))))
+           (sign-x (if (> delta-x 0) 1 -1))
+           (sign-y (if (> delta-y 0) 1 -1))
+           (d 0))
+      (declare (type fixnum d))
+      (flet ((in-drawable-region-p ()
+               (and (<= 0 p-x (surface-w surface))
+                    (<= 0 p-y (surface-h surface)))))
+        (if (< ay ax)
+            (inner-draw-line nil
+                             (when (in-drawable-region-p)
+                               (sdl:draw-pixel surface p-x p-y color)))
+            (inner-draw-line t
+                             (when (in-drawable-region-p)
+                               (sdl:draw-pixel surface p-x p-y color))))))))
 
 (defun draw-rectangle (x y w h color &optional (surface *vbuffer*))
   "Draws an unfilled rectangle with border color COLOR on SURFACE."
@@ -154,8 +157,8 @@ COLOR, on SURFACE."
 
 (defun draw-filled-rectangle (x y w h color &optional (surface *vbuffer*))
   "Draws a filled rectangle with solid color COLOR on SURFACE."
-  (with-gfx-rect-boa (rect x y w h)
-    (ll-gfx-fill-rect surface rect color)))
+  (sdl:with-rect-boa (rect x y w h)
+    (sdl:fill-rect surface rect color)))
 
 (defun draw-triangle (xs ys color &optional (surface *vbuffer*))
   "Draws an unfilled triangle where XS and YS are lists containing
@@ -223,3 +226,14 @@ modify LIST)"
 	       (when (<= 0 p-y y-max) (listplot p-x p-y)))))))
   list)
 
+
+;;;; Trivial tests
+
+#+nil(with-display (:scale 3)
+       (let ((image (load-image "/home/julian/balloon-spite.png")))
+         (clear-display)
+         (fill-background #x7e005300)
+         (blit-image image 10 150)
+         (draw-filled-triangle '(280 320 300) '(20 20 0) #xffffffff)
+         (present-display)
+         (sleep 1)))

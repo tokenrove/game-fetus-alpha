@@ -2,10 +2,10 @@
 (defpackage :game-fetus-alpha
   (:nicknames :fetus)
   (:use :cl :anaphora)
-  (:export #:create-display
-	   #:new-image-buffer
-	   #:destroy-display
-	   #:refresh-display
+  (:export #:with-display
+           #:new-image-buffer
+           #:clear-display
+           #:present-display
 	   #:surface-w
 	   #:surface-h
 	   #:display-width

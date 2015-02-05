@@ -56,16 +56,6 @@
 
 ;;;; API-LEVEL ROUTINES.
 
-;;; Any point having a with-event-handling macro?  I think this is
-;;; probably real first-init stuff, and probably doesn't need a with-
-;;; wrapper.
-(defun event-init ()
-  (ll-event-init))
-
-(defun event-shutdown ()
-  (ll-event-shutdown))
-
-
 (defun wipe-events ()
   "Clears any ghost events that might be in the event map because of
 an interruption or similar."
@@ -77,47 +67,16 @@ an interruption or similar."
   "function EVENT-UPDATE
 
 Checks for events, updates internal input state."
-  (cffi:with-foreign-object (event 'll-event)
-    (do* ((rv #1=(ll-poll-event event) #1#))
-	 ((= rv 0))
-      (cffi:with-foreign-slots ((type value axis) event ll-event)
-	(case type
-	  (:key-down
-	   (awhen (gethash value *xlate-symbol->map-idx*)
-	     (setf (bit *event-map* it) 1)))
-	  (:key-up
-	   (awhen (gethash value *xlate-symbol->map-idx*)
-	     (setf (bit *event-map* it) 0)))
-	  (:joy-move
-	   (case axis
-	     (0 (cond ((plusp value)
-		       (setf (bit *event-map* +ev-right+) 1
-			     (bit *event-map* +ev-left+) 0))
-		      ((minusp value)
-		       (setf (bit *event-map* +ev-right+) 0
-			     (bit *event-map* +ev-left+) 1))
-		      (t
-		       (setf (bit *event-map* +ev-right+) 0
-			     (bit *event-map* +ev-left+) 0))))
-	     (1 (cond ((plusp value)
-		       (setf (bit *event-map* +ev-down+) 1
-			     (bit *event-map* +ev-up+) 0))
-		      ((minusp value)
-		       (setf (bit *event-map* +ev-down+) 0
-			     (bit *event-map* +ev-up+) 1))
-		      (t
-		       (setf (bit *event-map* +ev-down+) 0
-			     (bit *event-map* +ev-up+) 0))))))
-	  (:joy-button-down
-	   (awhen (case value
-		    (0 +ev-button-a+)
-		    (1 +ev-button-b+))
-	     (setf (bit *event-map* it) 1)))
-	  (:joy-button-up
-	   (awhen (case value
-		    (0 +ev-button-a+)
-		    (1 +ev-button-b+))
-	     (setf (bit *event-map* it) 0))))))))
+  (sdl:with-event (event)
+    (do* ((rv #1=(sdl:poll-event event) #1#))
+         (rv)
+      (case (sdl:event-type event)
+        (:key-down
+         (awhen (gethash (sdl:event-keysym event) *xlate-symbol->map-idx*)
+           (setf (bit *event-map* it) 1)))
+        (:key-up
+         (awhen (gethash (sdl:event-keysym event) *xlate-symbol->map-idx*)
+           (setf (bit *event-map* it) 0)))))))
 
 
 (defun event-pressedp (event)
@@ -126,9 +85,8 @@ Checks for events, updates internal input state."
 
 
 (defun get-key-event ()
-  (cffi:with-foreign-object (event 'll-event)
-    (do ((rv #1=(ll-wait-event event) #1#))
-	((= rv 0))
-      (cffi:with-foreign-slots ((type value) event ll-event)
-	(when (eql type :key-down)
-	  (return value))))))
+  (sdl:with-event (event)
+    (loop
+      (sdl:wait-event event)
+      (when (eql (sdl:event-type event) :key-down)
+        (return-from get-key-event (sdl:event-keysym event))))))

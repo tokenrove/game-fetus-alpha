@@ -9,8 +9,9 @@
 
 (defun prompt-for-yes-or-no (font message)
   (loop
-     (draw-status-message font message 128 128 128)
-     (fetus:refresh-display)
+    (fetus:clear-display)
+    (draw-status-message font message 128 128 128)
+    (fetus:present-display)
    (let ((event (fetus:get-key-event)))
      (cond ((= event (char-code #\y)) (return t))
 	   ((= event (char-code #\n)) (return nil))))))
@@ -20,8 +21,9 @@
   (do ((string (make-array '(10) :element-type 'base-char
 			   :fill-pointer 0 :adjustable t)))
       (nil)
+    (clear-display)
     (draw-status-message font (format nil "~A~A" message string) 128 128 128)
-    (refresh-display)
+    (present-display)
     (let ((event (get-key-event)))
       (cond ((= event 13) (return string))
 	    ((<= (char-code #\Space) event (char-code #\~))
@@ -38,8 +40,9 @@
 (defun prompt-for-integer (font message)
   (do ((number 0))
       (nil)
+    (clear-display)
     (draw-status-message font (format nil "~A~A" message number) 128 128 128)
-    (refresh-display)
+    (present-display)
     (let ((event (get-key-event)))
       (cond ((= event 13) (return number))
 	    ((< 47 event 58) (setf number (+ (* number 10) (- event 48))))
