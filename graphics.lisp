@@ -50,7 +50,7 @@
 Creates a new graphics surface with the specified dimensions, and the
 same format as the current display.  Returns the new surface, or NIL
 if something went wrong."
-  (sdl:create-rgb-surface w h :pixel-format-argb8888))
+  (sdl:create-rgb-surface w h (sdl:format-of *vbuffer*)))
 
 (defun clear-display ()
   (sdl:render-clear *renderer*))
