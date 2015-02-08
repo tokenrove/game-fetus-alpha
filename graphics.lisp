@@ -226,6 +226,12 @@ modify LIST)"
 	       (when (<= 0 p-y y-max) (listplot p-x p-y)))))))
   list)
 
+(defun contents-of-current-display ()
+  (aprog1
+      (sdl:create-rgb-surface (sdl:width-of *vbuffer*)
+                              (sdl:height-of *vbuffer*)
+                              (sdl:format-of *vbuffer*))
+    (sdl:blit-surface *vbuffer* nil it 0 0)))
 
 ;;;; Trivial tests
 

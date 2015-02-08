@@ -53,3 +53,15 @@
 (defmacro with-font ((var file &optional (ptsize 12)) &body body)
   `(sdl-ttf:with-font (,var ,file ,ptsize)
      ,@body))
+
+#+5am
+(5am:test
+ (font-rendering-produces-visible-output :suite fetus/test:unit)
+  (fetus/test:with-dummy-sdl
+    (fetus/os:with-directory-of-system (:game-fetus-alpha)
+     (with-display ()
+       (with-font (font "./t/spn.ttf" 18)
+         (clear-display)
+         (paint-string font "this is a test" 10 10 #xff #xff #xff)
+         (present-display)
+         (5am:is (fetus/test::display-same-as-image? "./t/expected-result.png" "./t/failure-result.png")))))))

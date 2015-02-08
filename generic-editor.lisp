@@ -16,6 +16,11 @@
      (cond ((= event (char-code #\y)) (return t))
 	   ((= event (char-code #\n)) (return nil))))))
 
+#+5am
+(5am:test (prompt-for-yes-or-no-works :suite fetus/test:acceptance)
+  (with-display ()
+    (with-font (font "./other-data/spn.ttf" 18)
+      (prompt-for-yes-or-no font "Does this work?"))))
 
 (defun prompt-for-string (font message &key (symbol-mode nil))
   (do ((string (make-array '(10) :element-type 'base-char

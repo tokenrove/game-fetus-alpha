@@ -2,10 +2,12 @@
 (defpackage :game-fetus-alpha
   (:nicknames :fetus)
   (:use :cl :anaphora)
+  ;; graphics
   (:export #:with-display
            #:new-image-buffer
            #:clear-display
            #:present-display
+           #:contents-of-current-display
 	   #:surface-w
 	   #:surface-h
 	   #:display-width
@@ -74,3 +76,10 @@
   #+sbcl(:import-from :sb-posix #:setenv #:getenv #:unsetenv)
   (:export #:with-current-directory #:with-directory-of-system
            #:with-environment-variable))
+
+(defpackage :game-fetus-alpha/test
+  (:nicknames :fetus/test)
+  (:use :cl :game-fetus-alpha :fiveam)
+  (:export #:with-dummy-sdl)
+  ;; Suites
+  (:export #:unit #:integration #:acceptance))
