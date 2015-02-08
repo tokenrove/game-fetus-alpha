@@ -24,15 +24,16 @@
 
   ;; SDL keysym names; really, I'd rather grovel them, but for the
   ;; moment, this works.
+  (defconstant +scancode-mask+ (ash 1 30))
   (defconstant +keysym-backspace+ 8)
   (defconstant +keysym-escape+ 27)
   (defconstant +keysym-q+ 113)
   (defconstant +keysym-x+ 120)
   (defconstant +keysym-z+ 122)
-  (defconstant +keysym-up+ 273)
-  (defconstant +keysym-down+ 274)
-  (defconstant +keysym-right+ 275)
-  (defconstant +keysym-left+ 276)
+  (defconstant +keysym-up+ (logior 82 +scancode-mask+))
+  (defconstant +keysym-down+ (logior 81 +scancode-mask+))
+  (defconstant +keysym-right+ (logior 79 +scancode-mask+))
+  (defconstant +keysym-left+ (logior 80 +scancode-mask+))
 
   ;; Eventually we're going to need to support ideas like having more
   ;; than one controller.
