@@ -7,7 +7,7 @@
 
 (in-package :game-fetus-alpha/os)
 
-#+sbcl (import (#:getcwd #:chdir) :sb-posix)
+#+sbcl (import '(sb-posix:getcwd sb-posix:chdir))
 #+clozure
 (defun getcwd () (ccl:current-directory))
 #+clozure
