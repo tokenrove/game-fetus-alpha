@@ -67,7 +67,9 @@
   (:export #:prompt-for-yes-or-no
            #:prompt-for-string
            #:prompt-for-integer
-           #:draw-status-message))
+           #:draw-status-message)
+  ;; Test suites
+  (:export #:unit #:integration #:acceptance))
 
 (defpackage :game-fetus-alpha/os
   (:nicknames :fetus/os)
@@ -80,6 +82,5 @@
 (defpackage :game-fetus-alpha/test
   (:nicknames :fetus/test)
   (:use :cl :game-fetus-alpha :fiveam)
-  (:export #:with-dummy-sdl)
-  ;; Suites
-  (:export #:unit #:integration #:acceptance))
+  (:export #:with-dummy-sdl
+           #:display-same-as-expected-image-p))

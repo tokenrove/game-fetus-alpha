@@ -27,7 +27,7 @@ directory where the ASDF system SYSTEM is found."
      ,@body))
 
 #+5am
-(5am:test (nested-with-directory-of-system :suite game-fetus-alpha/test:unit)
+(5am:test (nested-with-directory-of-system :suite fetus:unit)
   (with-directory-of-system (:game-fetus-alpha)
     (let ((a (getcwd)) b)
       (with-directory-of-system (:fiveam)

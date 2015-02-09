@@ -2,13 +2,6 @@
 
 (in-package :game-fetus-alpha/test)
 
-(def-suite unit :description "Fast tests")
-(def-suite offscreen :description "Unit tests using dummy SDL video" :in unit)
-(def-suite integration :description "Non-interactive, potentially slow, tests")
-(def-suite acceptance :description "Interactive or high-level tests")
-
-(in-suite unit)
-
 (defmacro with-dummy-sdl (&body body)
   `(fetus/os:with-environment-variable ("SDL_VIDEODRIVER" "dummy")
      ,@body))
@@ -22,16 +15,23 @@
        (= (sdl:height-of a) (sdl:height-of b))
        (memcmp (sdl:pixels-of a) (sdl:pixels-of b) (* (sdl:pitch-of a) (sdl:height-of a)))))
 
-(defun display-same-as-image? (expected-path &optional failure-path)
-  "Compare the current display contents, pixel-by-pixel, with the PNG
-loaded from EXPECTED-PATH.
+(defun display-same-as-image-p (expected &optional failure-path)
+  "Compare the current display contents, pixel-by-pixel, with the surface EXPECTED.
 
 If FAILURE-PATH is supplied, save the current display contents there
 as a PNG if the comparison is false or the comparison image failed to
 load."
-  (let ((image (sdl-image:load expected-path))
-        (current-display (fetus:contents-of-current-display)))
-    (or (and image (surfaces-equal image current-display))
+  (let ((current-display (fetus:contents-of-current-display)))
+    (or (and expected (surfaces-equal expected current-display))
         (when failure-path
           (sdl-image:save-png current-display failure-path)
           nil))))
+
+(defun display-same-as-expected-image-p (test-symbol)
+  "Compare the current display contents with a PNG loaded from a
+location based on TEST-SYMBOL.  Do not expose this to arbitrary input,
+as TEST-SYMBOL is not sanity checked."
+  (let ((name (symbol-name test-symbol)))
+    (display-same-as-image-p
+     (sdl-image:load (concatenate 'string "./t/expected-result-" name ".png"))
+           (concatenate 'string "./t/failure-result-" name ".png"))))

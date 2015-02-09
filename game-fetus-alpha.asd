@@ -12,8 +12,9 @@
   :serial t
   :components
   ((:file "package")
-   (:file "testing")
+   (:file "test-suites")
    ;; low-level
+   (:file "testing")
    (:file "os")
    (:file "graphics")
    (:file "event")

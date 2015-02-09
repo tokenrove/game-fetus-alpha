@@ -56,7 +56,7 @@
 
 #+5am
 (5am:test
- (font-rendering-produces-visible-output :suite fetus/test:unit)
+ (font-rendering-produces-visible-output :suite fetus:unit)
   (fetus/test:with-dummy-sdl
     (fetus/os:with-directory-of-system (:game-fetus-alpha)
      (with-display ()
@@ -64,4 +64,4 @@
          (clear-display)
          (paint-string font "this is a test" 10 10 #xff #xff #xff)
          (present-display)
-         (5am:is (fetus/test::display-same-as-image? "./t/expected-result.png" "./t/failure-result.png")))))))
+         (5am:is-true (fetus/test:display-same-as-expected-image-p 'font-rendering-produces-visible-output)))))))

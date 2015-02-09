@@ -17,7 +17,7 @@
 	   ((= event (char-code #\n)) (return nil))))))
 
 #+5am
-(5am:test (prompt-for-yes-or-no-works :suite fetus/test:acceptance)
+(5am:test (prompt-for-yes-or-no-works :suite fetus:acceptance)
   (with-display ()
     (with-font (font "./other-data/spn.ttf" 18)
       (prompt-for-yes-or-no font "Does this work?"))))
