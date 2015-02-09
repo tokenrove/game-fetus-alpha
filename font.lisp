@@ -54,14 +54,7 @@
   `(sdl-ttf:with-font (,var ,file ,ptsize)
      ,@body))
 
-#+5am
-(5am:test
- (font-rendering-produces-visible-output :suite fetus:unit)
-  (fetus/test:with-dummy-sdl
-    (fetus/os:with-directory-of-system (:game-fetus-alpha)
-     (with-display ()
-       (with-font (font "./t/f500.ttf" 24)
-         (clear-display)
-         (paint-string font "this is a test" 10 10 #xff #xff #xff)
-         (present-display)
-         (5am:is-true (fetus/test:display-same-as-expected-image-p 'font-rendering-produces-visible-output)))))))
+(fetus/test:define-screencap-comparison-test
+    (font-rendering-produces-visible-output)
+  (with-font (font "./t/f500.ttf" 24)
+    (paint-string font "this is a test" 10 10 #xff #xff #xff)))

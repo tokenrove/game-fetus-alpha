@@ -83,4 +83,5 @@
   (:nicknames :fetus/test)
   (:use :cl :game-fetus-alpha :fiveam)
   (:export #:with-dummy-sdl
-           #:display-same-as-expected-image-p))
+           #:display-same-as-expected-image-p
+           #:define-screencap-comparison-test))
