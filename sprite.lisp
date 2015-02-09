@@ -71,6 +71,23 @@ Returns T if the animation was updated, NIL otherwise."
 	    (sprite-frame-counter sprite) (cdar flist))
       t)))
 
+(fetus/test:define-screencap-comparison-test
+    (sprite-loads-and-draws-correctly-at-various-positions)
+  (let ((s (new-sprite-from-alist '((:image "t/irongate.pcx")
+                                    (:blit-offset (0 . 0))
+                                    (:frames ((0 0 32 96)))
+                                    (:animations ((:default (0 . 60))))))))
+    (draw-sprite s)
+    (setf (sprite-x s) 300
+          (sprite-y s) 10)
+    (draw-sprite s)
+    (setf (sprite-x s) -10
+          (sprite-y s) 180)
+    (draw-sprite s)
+    (setf (sprite-x s) 320
+          (sprite-y s) 200)
+    (draw-sprite s)))
+
 ;;;; Sprite Manager
 
 (defclass sprite-manager ()
