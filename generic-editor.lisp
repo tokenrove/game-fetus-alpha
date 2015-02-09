@@ -19,8 +19,10 @@
 #+5am
 (5am:test (prompt-for-yes-or-no-works :suite fetus:acceptance)
   (with-display ()
-    (with-font (font "./other-data/spn.ttf" 18)
-      (prompt-for-yes-or-no font "Does this work?"))))
+    (fetus/os:with-directory-of-system (:game-fetus-alpha)
+     (with-font (font "./t/f500.ttf" 18)
+       (5am:is (prompt-for-yes-or-no font "Does this work?")))))
+  (5am:pass))
 
 (defun prompt-for-string (font message &key (symbol-mode nil))
   (do ((string (make-array '(10) :element-type 'base-char
@@ -41,6 +43,13 @@
 	     (unless (zerop (fill-pointer string))
 	       (vector-pop string)))))))
 
+#+5am
+(5am:test (prompt-for-string-works :suite fetus:acceptance)
+  (with-display ()
+    (fetus/os:with-directory-of-system (:game-fetus-alpha)
+     (with-font (font "./t/f500.ttf" 18)
+       (5am:is (equal "foo" (prompt-for-string font "Enter the word 'foo':"))))))
+  (5am:pass))
 
 (defun prompt-for-integer (font message)
   (do ((number 0))
@@ -53,6 +62,13 @@
 	    ((< 47 event 58) (setf number (+ (* number 10) (- event 48))))
 	    ((= event 8) (setf number (floor number 10)))))))
 
+#+5am
+(5am:test (prompt-for-integer-works :suite fetus:acceptance)
+  (with-display ()
+    (fetus/os:with-directory-of-system (:game-fetus-alpha)
+     (with-font (font "./t/f500.ttf" 18)
+       (5am:is (equal 42 (prompt-for-integer font "Enter the number 42: "))))))
+  (5am:pass))
 
 (defun draw-status-message (font message r g b)
   (draw-filled-rectangle 8 (- (display-height) 32) (- (display-width) 16) 24
