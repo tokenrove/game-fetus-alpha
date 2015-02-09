@@ -69,25 +69,50 @@ an interruption or similar."
 
 Checks for events, updates internal input state."
   (sdl:with-event (event)
-    (do* ((rv #1=(sdl:poll-event event) #1#))
-         (rv)
-      (case (sdl:event-type event)
-        (:key-down
-         (awhen (gethash (sdl:event-keysym event) *xlate-symbol->map-idx*)
-           (setf (bit *event-map* it) 1)))
-        (:key-up
-         (awhen (gethash (sdl:event-keysym event) *xlate-symbol->map-idx*)
-           (setf (bit *event-map* it) 0)))))))
+    (sdl:pump-events)
+    (loop while (sdl:poll-event event)
+          do (let ((type (sdl:event-type event)))
+               (case type
+                 ((:key-down :key-up)
+                  (awhen (gethash (sdl:event-keysym event) *xlate-symbol->map-idx*)
+                    (setf (bit *event-map* it) (if (eql type :key-down) 1 0))))
+                 (:quit
+                  (setf (bit *event-map* +ev-quit+) 1)))))))
 
 
 (defun event-pressedp (event)
   "Returns T if EVENT is pressed, NIL otherwise."
-  (= (bit *event-map* event) 1))
+  (= (bit *event-map* (ecase event
+                        (:quit 0)
+                        (:up 1)
+                        (:down 2)
+                        (:left 3)
+                        (:right 4)
+                        (:button-a 5)
+                        (:button-b 6))) 1))
 
 
 (defun get-key-event ()
   (sdl:with-event (event)
-    (loop
-      (sdl:wait-event event)
-      (when (eql (sdl:event-type event) :key-down)
-        (return-from get-key-event (sdl:event-keysym event))))))
+    (loop do (sdl:wait-event event)
+          until (eql (sdl:event-type event) :key-down))
+    (sdl:event-keysym event)))
+
+#+5am
+(5am:test (events :suite fetus:acceptance)
+  (with-display ()
+    (fetus/os:with-directory-of-system (:game-fetus-alpha)
+      (with-font (font "./t/f500.ttf" 18)
+        (wipe-events)
+        (loop
+          (clear-display)
+          (event-update)
+          (paint-string font "Testing events..." 0 0 0 0 255)
+          (when (event-pressedp :quit)
+            (return nil))
+          (loop for key in '(:left :right :up :down :button-a :button-b)
+                for y from 0 by 24
+                do (when (event-pressedp key)
+                     (paint-string font (symbol-name key) 30 y 0 255 0)))
+          (present-display)))))
+  (5am:pass))

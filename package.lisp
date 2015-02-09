@@ -23,14 +23,7 @@
 	   #:draw-triangle
            #:draw-filled-triangle)
   ;; events
-  (:export #:+ev-quit+
-           #:+ev-up+
-           #:+ev-down+
-           #:+ev-left+
-           #:+ev-right+
-           #:+ev-button-a+
-           #:+ev-button-b+
-           #:event-init
+  (:export #:event-init
            #:event-shutdown
            #:wipe-events
            #:event-update
