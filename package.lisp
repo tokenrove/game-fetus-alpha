@@ -73,9 +73,7 @@
 
 (defpackage :game-fetus-alpha/os
   (:nicknames :fetus/os)
-  (:use :cl :anaphora :alexandria)
-  #+sbcl(:import-from :sb-posix #:getcwd #:chdir)
-  #+sbcl(:import-from :sb-posix #:setenv #:getenv #:unsetenv)
+  (:use :cl :alexandria)
   (:export #:with-current-directory #:with-directory-of-system
            #:with-environment-variable))
 

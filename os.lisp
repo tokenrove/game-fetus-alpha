@@ -7,6 +7,16 @@
 
 (in-package :game-fetus-alpha/os)
 
+#+sbcl (import (#:getcwd #:chdir) :sb-posix)
+#+clozure
+(defun getcwd () (ccl:current-directory))
+#+clozure
+(defun chdir (path) (setf (ccl:current-directory) path))
+
+#+sbcl (import '(sb-posix:setenv sb-posix:getenv sb-posix:unsetenv))
+#+clozure (import '(ccl:setenv ccl:getenv ccl:unsetenv))
+
+
 (defmacro with-current-directory ((path) &body body)
   "Evaluate BODY with PATH as the current working directory.  This
 sets both the OS current working directory and
@@ -32,8 +42,8 @@ directory where the ASDF system SYSTEM is found."
     (let ((a (getcwd)) b)
       (with-directory-of-system (:fiveam)
         (setf b (getcwd)))
-      (5am:is (string-equal a (getcwd)))
-      (5am:is (not (string-equal a b))))))
+      (5am:is (equal a (getcwd)))
+      (5am:is (not (equal a b))))))
 
 (defmacro with-environment-variable ((env-var value) &body body)
   (let ((old-value (gensym "OLD-VALUE")))
@@ -44,3 +54,10 @@ directory where the ASDF system SYSTEM is found."
            (if ,old-value
                (setenv ,env-var ,old-value 1)
                (unsetenv ,env-var)))))))
+
+#+5am
+(5am:test with-environment-variable
+  (let ((a (getenv "HOME")))
+    (with-environment-variable ("HOME" "/tmp/")
+      (5am:is (equal (getenv "HOME") "/tmp/")))
+    (5am:is (equal (getenv "HOME") a))))
