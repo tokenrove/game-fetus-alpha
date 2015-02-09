@@ -13,7 +13,7 @@
   "Compare two SDL:SURFACEs by pixels, bytewise."
   (and (= (sdl:pitch-of a) (sdl:pitch-of b))
        (= (sdl:height-of a) (sdl:height-of b))
-       (memcmp (sdl:pixels-of a) (sdl:pixels-of b) (* (sdl:pitch-of a) (sdl:height-of a)))))
+       (= 0 (memcmp (sdl:pixels-of a) (sdl:pixels-of b) (* (sdl:pitch-of a) (sdl:height-of a))))))
 
 (defun display-same-as-image-p (expected &optional failure-path)
   "Compare the current display contents, pixel-by-pixel, with the surface EXPECTED.

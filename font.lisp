@@ -60,7 +60,7 @@
   (fetus/test:with-dummy-sdl
     (fetus/os:with-directory-of-system (:game-fetus-alpha)
      (with-display ()
-       (with-font (font "./t/spn.ttf" 18)
+       (with-font (font "./t/f500.ttf" 24)
          (clear-display)
          (paint-string font "this is a test" 10 10 #xff #xff #xff)
          (present-display)
