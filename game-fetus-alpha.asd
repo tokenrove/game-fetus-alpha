@@ -6,7 +6,7 @@
   :description "A crude library of game abstractions supporting Demon of the Fall"
   :author "Julian Squires <julian@cipht.net>"
   :license "GPL-3"
-  :depends-on (:anaphora :cl-sdl-cipht :fiveam)
+  :depends-on (:anaphora :alexandria :cl-sdl-cipht :fiveam)
   :perform (test-op (o s)
                     (uiop:symbol-call :fiveam :run! (uiop:find-symbol* :unit :game-fetus-alpha/test)))
   :serial t
