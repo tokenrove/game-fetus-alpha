@@ -42,19 +42,14 @@
            #:load-font
            #:with-font)
   ;; sprite
-  (:export #:sprite-x
+  (:export #:sprite
+           #:sprite-x
            #:sprite-y
            #:sprite-priority
            #:sprite-blit-offset
            #:new-sprite-from-alist
            #:draw-sprite
-           #:set-sprite-animation
-           #:create-sprite-manager
-           #:destroy-sprite-manager
-           #:add-sprite-to-manager
-           #:remove-sprite-from-manager
-           #:update-all-sprites
-           #:with-sprite-manager)
+           #:set-sprite-animation)
   ;; layer
   ;; generic editor
   (:export #:prompt-for-yes-or-no
