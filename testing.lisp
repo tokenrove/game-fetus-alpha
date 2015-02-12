@@ -22,7 +22,9 @@ If FAILURE-PATH is supplied, save the current display contents there
 as a PNG if the comparison is false or the comparison image failed to
 load."
   (let ((current-display (fetus:contents-of-current-display)))
-    (or (and expected (surfaces-equal expected current-display))
+    (or (and expected
+             (surfaces-equal expected
+                             (sdl:convert-surface current-display (sdl:format-of expected) 0)))
         (when failure-path
           (sdl-image:save-png current-display failure-path)
           nil))))
