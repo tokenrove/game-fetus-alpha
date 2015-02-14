@@ -8,6 +8,7 @@
            #:clear-display
            #:present-display
            #:contents-of-current-display
+           #:get-local-color
 	   #:surface-w
 	   #:surface-h
 	   #:display-width

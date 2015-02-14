@@ -19,6 +19,15 @@
 (defvar *renderer*)
 (defvar *vtexture*)
 
+(defun get-local-color (rgba &optional (surface *vbuffer*))
+  "Map the 32-bit integer RGBA to a color appropriate for SURFACE (by
+default, a surface with the same format as the current display)."
+  (sdl:map-rgba (sdl:format-of surface)
+                (ldb (byte 8 0) rgba)
+                (ldb (byte 8 8) rgba)
+                (ldb (byte 8 16) rgba)
+                (ldb (byte 8 24) rgba)))
+
 (defmacro with-display ((&key (fullscreen? nil) (scale 1)) &body body)
   (declare (ignore fullscreen?))
   `(sdl:with-init ()
